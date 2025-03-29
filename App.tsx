@@ -1,5 +1,5 @@
 // Import Reanimated at the very top of the file
-// import 'react-native-reanimated';
+import 'react-native-reanimated';
 
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';

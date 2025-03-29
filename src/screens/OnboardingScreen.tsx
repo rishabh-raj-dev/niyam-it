@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, Dimensions, ImageBackground, Animated } from 'react-native';
 import { Text, Button, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     id: '1',
-    title: 'Welcome to Habito',
+    title: 'Welcome to TrackFlow',
     description: 'Your personal habit tracker to build better routines and achieve your goals.',
     image: require('../../assets/icon.png'),
   },
@@ -42,9 +42,54 @@ const OnboardingScreen = () => {
   const dispatch = useAppDispatch();
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
+  // Animation values with regular React Native Animated
+  const opacity = useState(new Animated.Value(0))[0];
+  const translateY = useState(new Animated.Value(50))[0];
+  
+  // Reset animations when slide changes
+  useEffect(() => {
+    // Animate in the new slide
+    opacity.setValue(0);
+    translateY.setValue(50);
+    
+    // Start animation
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, [currentSlideIndex]);
+  
+  const animatedStyle = {
+    opacity,
+    transform: [{ translateY }]
+  };
+  
   const handleNext = () => {
     if (currentSlideIndex < slides.length - 1) {
-      setCurrentSlideIndex(currentSlideIndex + 1);
+      // Animate out current slide then change to next
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true
+        }),
+        Animated.timing(translateY, {
+          toValue: 30,
+          duration: 300,
+          useNativeDriver: true
+        })
+      ]).start(() => {
+        setCurrentSlideIndex(currentSlideIndex + 1);
+      });
     } else {
       handleGetStarted();
     }
@@ -55,34 +100,30 @@ const OnboardingScreen = () => {
   };
   
   const handleGetStarted = () => {
-    // Mark first launch as complete
-    dispatch(setFirstLaunch(false));
-    // Navigate to Home screen
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Main' as never }],
+    // Animate out before navigation
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true
+      }),
+      Animated.timing(translateY, {
+        toValue: 100,
+        duration: 500,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      // Mark first launch as complete
+      dispatch(setFirstLaunch(false));
+      // Navigate to Home screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' as never }],
+      });
     });
   };
   
-  const renderSlides = () => {
-    const currentSlide = slides[currentSlideIndex];
-    
-    return (
-      <View style={styles.slideContainer} key={currentSlide.id}>
-        <Image 
-          source={currentSlide.image} 
-          style={styles.slideImage}
-          resizeMode="contain"
-        />
-        <Text variant="headlineMedium" style={styles.slideTitle}>
-          {currentSlide.title}
-        </Text>
-        <Text variant="bodyLarge" style={styles.slideDescription}>
-          {currentSlide.description}
-        </Text>
-      </View>
-    );
-  };
+  const currentSlide = slides[currentSlideIndex];
   
   return (
     <ImageBackground
@@ -91,7 +132,19 @@ const OnboardingScreen = () => {
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          {renderSlides()}
+          <Animated.View style={[styles.slideContainer, animatedStyle]}>
+            <Image 
+              source={currentSlide.image} 
+              style={styles.slideImage}
+              resizeMode="contain"
+            />
+            <Text variant="headlineMedium" style={styles.slideTitle}>
+              {currentSlide.title}
+            </Text>
+            <Text variant="bodyLarge" style={styles.slideDescription}>
+              {currentSlide.description}
+            </Text>
+          </Animated.View>
           
           <View style={styles.indicatorContainer}>
             {slides.map((_, index) => (
