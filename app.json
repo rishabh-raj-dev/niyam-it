@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "habito",
-    "slug": "habito",
+    "name": "TrackFlow",
+    "slug": "trackflow",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
